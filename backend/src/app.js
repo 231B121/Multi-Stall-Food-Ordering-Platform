@@ -2,24 +2,23 @@ const express = require('express');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
 const authRoutes = require('./routes/authRoutes');
+const stallRoutes = require('./routes/stallRoutes');
+const categoryRoutes = require('./routes/categoryRoutes');
+const productRoutes = require('./routes/productRoutes');
 
 const app = express();
 
-// Middleware: Parse JSON
+// Middleware
 app.use(express.json());
-
-// Middleware: Parse cookies (for refresh token)
 app.use(cookieParser());
-
-// Middleware: CORS
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' 
     ? 'https://yourdomain.com' 
     : 'http://localhost:3000',
-  credentials: true, // Allow cookies
+  credentials: true,
 }));
 
-// Middleware: Log requests
+// Logging middleware
 app.use((req, res, next) => {
   console.log(`${new Date().toISOString()} ${req.method} ${req.path}`);
   next();
@@ -27,6 +26,9 @@ app.use((req, res, next) => {
 
 // Routes
 app.use('/api/auth', authRoutes);
+app.use('/api/stalls', stallRoutes);
+app.use('/api/stalls/:stallId/categories', categoryRoutes);
+app.use('/api/stalls/:stallId/products', productRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
