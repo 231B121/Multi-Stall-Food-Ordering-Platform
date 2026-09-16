@@ -67,17 +67,9 @@ exports.getStallById = async (req, res) => {
   try {
     const { stallId } = req.params;
 
-    // Verify ownership (unless SUPER_ADMIN)
-    if (
-      req.user.role !== 'SUPER_ADMIN' &&
-      req.user.stallId !== stallId
-    ) {
-      return res.status(403).json({
-        error: 'Cannot access this stall',
-      });
-    }
-
-    const stall = await Stall.findById(stallId).populate('adminId');
+    const stall = req.stall
+      ? await req.stall.populate('adminId', 'name phone email')
+      : await Stall.findById(stallId).populate('adminId', 'name phone email');
 
     if (!stall) {
       return res.status(404).json({ error: 'Stall not found' });
@@ -96,17 +88,7 @@ exports.updateStall = async (req, res) => {
     const { stallId } = req.params;
     const updates = req.body;
 
-    // Verify ownership
-    if (
-      req.user.role !== 'SUPER_ADMIN' &&
-      req.user.stallId !== stallId
-    ) {
-      return res.status(403).json({
-        error: 'Cannot modify this stall',
-      });
-    }
-
-    // Prevent admin from changing adminId
+    // Prevent changing adminId
     delete updates.adminId;
 
     const stall = await Stall.findByIdAndUpdate(stallId, updates, {
