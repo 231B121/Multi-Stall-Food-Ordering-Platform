@@ -8,9 +8,13 @@ const productRoutes = require('./routes/productRoutes');
 
 const app = express();
 
-// Middleware
+// Middleware: Parse JSON
 app.use(express.json());
+
+// Middleware: Parse cookies
 app.use(cookieParser());
+
+// Middleware: CORS
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' 
     ? 'https://yourdomain.com' 
@@ -18,7 +22,7 @@ app.use(cors({
   credentials: true,
 }));
 
-// Logging middleware
+// Middleware: Logging
 app.use((req, res, next) => {
   console.log(`${new Date().toISOString()} ${req.method} ${req.path}`);
   next();
