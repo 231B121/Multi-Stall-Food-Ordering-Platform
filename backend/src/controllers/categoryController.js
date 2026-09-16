@@ -8,18 +8,12 @@ exports.createCategory = async (req, res) => {
     const { stallId } = req.params;
     const { name, description, image, displayOrder } = req.body;
 
-    // Verify ownership
-    if (
-      req.user.role !== 'SUPER_ADMIN' &&
-      req.user.stallId !== stallId
-    ) {
-      return res.status(403).json({
-        error: 'Cannot create category for this stall',
-      });
+    if (!name) {
+      return res.status(400).json({ error: 'Category name is required' });
     }
 
-    // Verify stall exists
-    const stall = await Stall.findById(stallId);
+    // Verify stall exists (or use req.stall from verifyStallOwnership)
+    const stall = req.stall || (await Stall.findById(stallId));
     if (!stall) {
       return res.status(404).json({ error: 'Stall not found' });
     }
@@ -29,7 +23,7 @@ exports.createCategory = async (req, res) => {
       name,
       description,
       image,
-      displayOrder,
+      displayOrder: displayOrder || 0,
     });
 
     await category.save();
@@ -72,16 +66,6 @@ exports.updateCategory = async (req, res) => {
     const { stallId, categoryId } = req.params;
     const updates = req.body;
 
-    // Verify ownership
-    if (
-      req.user.role !== 'SUPER_ADMIN' &&
-      req.user.stallId !== stallId
-    ) {
-      return res.status(403).json({
-        error: 'Cannot modify this category',
-      });
-    }
-
     // Verify category belongs to stall
     const category = await Category.findOne({ _id: categoryId, stallId });
     if (!category) {
@@ -107,16 +91,6 @@ exports.updateCategory = async (req, res) => {
 exports.deleteCategory = async (req, res) => {
   try {
     const { stallId, categoryId } = req.params;
-
-    // Verify ownership
-    if (
-      req.user.role !== 'SUPER_ADMIN' &&
-      req.user.stallId !== stallId
-    ) {
-      return res.status(403).json({
-        error: 'Cannot delete this category',
-      });
-    }
 
     const category = await Category.findOneAndDelete({
       _id: categoryId,
