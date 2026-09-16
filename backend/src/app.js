@@ -3,7 +3,7 @@ const cors = require('cors');
 
 const app = express();
 
-// Middleware: Parse JSON
+
 app.use(express.json());
 
 // Middleware: CORS (allow frontend to call backend)
