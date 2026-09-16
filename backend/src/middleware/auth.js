@@ -33,8 +33,9 @@ const authenticateToken = (req, res, next) => {
  * Usage: authorizeRole('SUPER_ADMIN', 'STALL_ADMIN')
  */
 const authorizeRole = (...allowedRoles) => {
+  const roles = allowedRoles.flat();
   return (req, res, next) => {
-    if (!req.user || !allowedRoles.includes(req.user.role)) {
+    if (!req.user || !roles.includes(req.user.role)) {
       return res.status(403).json({
         error: 'Access denied: insufficient permissions',
       });
