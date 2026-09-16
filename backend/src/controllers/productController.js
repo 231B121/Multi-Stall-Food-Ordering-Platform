@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const Product = require('../models/Product');
 const Category = require('../models/Category');
 const Stall = require('../models/Stall');
@@ -10,26 +11,32 @@ exports.createProduct = async (req, res) => {
     const { name, description, price, categoryId, image, isVegetarian } =
       req.body;
 
-    // Verify ownership
-    if (
-      req.user.role !== 'SUPER_ADMIN' &&
-      req.user.stallId !== stallId
-    ) {
-      return res.status(403).json({
-        error: 'Cannot create product for this stall',
+    // Validate input
+    if (!name || price === undefined || !categoryId) {
+      return res.status(400).json({
+        error: 'Name, price, and categoryId are required',
       });
     }
 
-    // Verify stall exists
-    const stall = await Stall.findById(stallId);
+    // Verify stall exists (or use req.stall attached by verifyStallOwnership)
+    const stall = req.stall || (await Stall.findById(stallId));
     if (!stall) {
       return res.status(404).json({ error: 'Stall not found' });
+    }
+
+    // Validate categoryId format
+    if (!mongoose.Types.ObjectId.isValid(categoryId)) {
+      return res.status(400).json({
+        error: 'Invalid categoryId format. Please provide a valid category ObjectId.',
+      });
     }
 
     // Verify category belongs to stall
     const category = await Category.findOne({ _id: categoryId, stallId });
     if (!category) {
-      return res.status(404).json({ error: 'Category not found' });
+      return res.status(404).json({
+        error: 'Category not found for this stall',
+      });
     }
 
     const product = new Product({
@@ -110,20 +117,26 @@ exports.updateProduct = async (req, res) => {
     const { stallId, productId } = req.params;
     const updates = req.body;
 
-    // Verify ownership
-    if (
-      req.user.role !== 'SUPER_ADMIN' &&
-      req.user.stallId !== stallId
-    ) {
-      return res.status(403).json({
-        error: 'Cannot modify this product',
-      });
-    }
-
     // Verify product belongs to stall
     const product = await Product.findOne({ _id: productId, stallId });
     if (!product) {
       return res.status(404).json({ error: 'Product not found' });
+    }
+
+    // If updating categoryId, verify it exists and belongs to stall
+    if (updates.categoryId) {
+      if (!mongoose.Types.ObjectId.isValid(updates.categoryId)) {
+        return res.status(400).json({ error: 'Invalid categoryId format' });
+      }
+      const category = await Category.findOne({
+        _id: updates.categoryId,
+        stallId,
+      });
+      if (!category) {
+        return res.status(404).json({
+          error: 'New category not found for this stall',
+        });
+      }
     }
 
     const updated = await Product.findByIdAndUpdate(productId, updates, {
@@ -145,16 +158,6 @@ exports.updateProduct = async (req, res) => {
 exports.deleteProduct = async (req, res) => {
   try {
     const { stallId, productId } = req.params;
-
-    // Verify ownership
-    if (
-      req.user.role !== 'SUPER_ADMIN' &&
-      req.user.stallId !== stallId
-    ) {
-      return res.status(403).json({
-        error: 'Cannot delete this product',
-      });
-    }
 
     const product = await Product.findOneAndDelete({
       _id: productId,
