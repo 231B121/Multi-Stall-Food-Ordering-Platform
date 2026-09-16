@@ -1,20 +1,16 @@
 const User = require('../models/User');
 const jwt = require('jsonwebtoken');
 
-// ===== REGISTER =====
-
 exports.register = async (req, res) => {
   try {
     const { name, mobile, email, password, referralCode } = req.body;
 
-    // 1. Validate input
     if (!name || !mobile || !password) {
       return res.status(400).json({
         error: 'Name, mobile, and password are required',
       });
     }
 
-    // 2. Check if user already exists
     const existingUser = await User.findOne({ mobile });
     if (existingUser) {
       return res.status(409).json({
@@ -22,7 +18,6 @@ exports.register = async (req, res) => {
       });
     }
 
-    // 3. Validate referral code (if provided)
     let referredByUser = null;
     if (referralCode) {
       referredByUser = await User.findOne({ referralCode });
@@ -33,7 +28,6 @@ exports.register = async (req, res) => {
       }
     }
 
-    // 4. Create user
     const user = new User({
       name,
       mobile,
@@ -44,10 +38,8 @@ exports.register = async (req, res) => {
 
     await user.save();
 
-    // 5. Generate tokens
     const tokens = generateTokens(user);
 
-    // 6. Send response
     res.status(201).json({
       message: 'User registered successfully',
       user: user.toJSON(),
@@ -63,20 +55,16 @@ exports.register = async (req, res) => {
   }
 };
 
-// ===== LOGIN =====
-
 exports.login = async (req, res) => {
   try {
     const { mobile, password } = req.body;
 
-    // 1. Validate input
     if (!mobile || !password) {
       return res.status(400).json({
         error: 'Mobile and password are required',
       });
     }
 
-    // 2. Find user and include password field
     const user = await User.findOne({ mobile }).select('+password');
     if (!user) {
       return res.status(401).json({
@@ -84,7 +72,6 @@ exports.login = async (req, res) => {
       });
     }
 
-    // 3. Verify password
     const isPasswordValid = await user.comparePassword(password);
     if (!isPasswordValid) {
       return res.status(401).json({
@@ -92,25 +79,21 @@ exports.login = async (req, res) => {
       });
     }
 
-    // 4. Check if user is active
     if (!user.isActive) {
       return res.status(403).json({
         error: 'Account is deactivated',
       });
     }
 
-    // 5. Generate tokens
     const tokens = generateTokens(user);
 
-    // 6. Set refresh token in httpOnly cookie
     res.cookie('refreshToken', tokens.refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
-    // 7. Send response
     res.json({
       message: 'Login successful',
       user: user.toJSON(),
@@ -125,11 +108,8 @@ exports.login = async (req, res) => {
   }
 };
 
-// ===== REFRESH TOKEN =====
-
 exports.refreshToken = async (req, res) => {
   try {
-    // 1. Get refresh token from cookie
     const refreshToken = req.cookies.refreshToken;
     if (!refreshToken) {
       return res.status(401).json({
@@ -137,10 +117,8 @@ exports.refreshToken = async (req, res) => {
       });
     }
 
-    // 2. Verify refresh token
     const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
 
-    // 3. Find user
     const user = await User.findById(decoded.userId);
     if (!user || !user.isActive) {
       return res.status(401).json({
@@ -148,18 +126,15 @@ exports.refreshToken = async (req, res) => {
       });
     }
 
-    // 4. Generate new tokens
     const tokens = generateTokens(user);
 
-    // 5. Update refresh token cookie
     res.cookie('refreshToken', tokens.refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
-    // 6. Send response
     res.json({
       accessToken: tokens.accessToken,
       expiresIn: tokens.expiresIn,
@@ -172,11 +147,8 @@ exports.refreshToken = async (req, res) => {
   }
 };
 
-// ===== GET CURRENT USER =====
-
 exports.getMe = async (req, res) => {
   try {
-    // req.user is set by authentication middleware
     const user = await User.findById(req.user.userId);
     if (!user) {
       return res.status(404).json({
@@ -194,27 +166,20 @@ exports.getMe = async (req, res) => {
   }
 };
 
-// ===== LOGOUT =====
-
 exports.logout = (req, res) => {
-  // Clear refresh token cookie
   res.clearCookie('refreshToken');
   res.json({
     message: 'Logged out successfully',
   });
 };
 
-// ===== HELPER FUNCTION =====
-
 function generateTokens(user) {
-  // Access token: expires in 1 hour
   const accessToken = jwt.sign(
     { userId: user._id, role: user.role },
     process.env.JWT_SECRET,
     { expiresIn: '1h' }
   );
 
-  // Refresh token: expires in 7 days
   const refreshToken = jwt.sign(
     { userId: user._id },
     process.env.JWT_REFRESH_SECRET,
@@ -224,6 +189,6 @@ function generateTokens(user) {
   return {
     accessToken,
     refreshToken,
-    expiresIn: 3600, // 1 hour in seconds
+    expiresIn: 3600,
   };
 }
