@@ -33,6 +33,12 @@ const userSchema = new mongoose.Schema(
       enum: ['USER', 'STALL_ADMIN', 'SUPER_ADMIN'],
       default: 'USER',
     },
+    stallIds: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Stall',
+      },
+    ],
 
     // Referral system (we'll use this on Day 8)
     referralCode: {
