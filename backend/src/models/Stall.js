@@ -101,11 +101,10 @@ const stallSchema = new mongoose.Schema(
 // ===== MIDDLEWARE =====
 
 // Auto-generate slug before saving
-stallSchema.pre('save', function (next) {
+stallSchema.pre('save', function () {
   if (this.isModified('name')) {
     this.slug = slugify(this.name, { lower: true, strict: true });
   }
-  next();
 });
 
 // ===== INDEXES =====
