@@ -1,21 +1,34 @@
 const express = require('express');
 const cors = require('cors');
+const cookieParser = require('cookie-parser');
+const authRoutes = require('./routes/authRoutes');
 
 const app = express();
 
-
+// Middleware: Parse JSON
 app.use(express.json());
 
-// Middleware: CORS (allow frontend to call backend)
-app.use(cors());
+// Middleware: Parse cookies (for refresh token)
+app.use(cookieParser());
 
-// Middleware: Log all requests (for debugging)
+// Middleware: CORS
+app.use(cors({
+  origin: process.env.NODE_ENV === 'production' 
+    ? 'https://yourdomain.com' 
+    : 'http://localhost:3000',
+  credentials: true, // Allow cookies
+}));
+
+// Middleware: Log requests
 app.use((req, res, next) => {
   console.log(`${new Date().toISOString()} ${req.method} ${req.path}`);
   next();
 });
 
-// Health Check Endpoint
+// Routes
+app.use('/api/auth', authRoutes);
+
+// Health check
 app.get('/api/health', (req, res) => {
   res.json({
     status: 'ok',
@@ -25,7 +38,7 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// 404 Handler (catches undefined routes)
+// 404 handler
 app.use((req, res) => {
   res.status(404).json({
     error: 'Route not found',
@@ -34,7 +47,7 @@ app.use((req, res) => {
   });
 });
 
-// Global error handler (catches errors from routes)
+// Error handler
 app.use((err, req, res, next) => {
   console.error(`Error: ${err.message}`);
   res.status(err.status || 500).json({
