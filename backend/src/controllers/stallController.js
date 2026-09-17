@@ -1,8 +1,12 @@
 const Stall = require('../models/Stall');
 const User = require('../models/User');
 
-// ===== CREATE STALL (SUPER_ADMIN or User) =====
-
+/**
+ * Create a new Food Stall
+ * @route POST /api/stalls
+ * @access Private (SUPER_ADMIN or authenticated User)
+ * @desc Creates a stall and elevates user role to STALL_ADMIN
+ */
 exports.createStall = async (req, res) => {
   try {
     const { name, description, location, phone, cuisineType } = req.body;
@@ -40,8 +44,12 @@ exports.createStall = async (req, res) => {
   }
 };
 
-// ===== GET STALL BY SLUG (PUBLIC) =====
-
+/**
+ * Retrieve public stall information by unique slug
+ * @route GET /api/stalls/slug/:slug
+ * @access Public
+ * @desc Used by customers to view stall landing page and menu
+ */
 exports.getStallBySlug = async (req, res) => {
   try {
     const { slug } = req.params;
