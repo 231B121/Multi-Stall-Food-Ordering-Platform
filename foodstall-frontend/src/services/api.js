@@ -1,10 +1,15 @@
 import axios from 'axios';
 
-const API_BASE = 'http://localhost:5000/api';
+/**
+ * Base API URL configurable via Vite environment variables (.env)
+ * Defaults to http://localhost:5000/api in local development.
+ */
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
-// Create axios instance with default config
+// Create configured axios client instance with request timeout
 const apiClient = axios.create({
   baseURL: API_BASE,
+  timeout: 10000,
 });
 
 // Add token to every request
