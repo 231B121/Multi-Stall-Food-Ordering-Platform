@@ -1,5 +1,11 @@
 const mongoose = require('mongoose');
 
+/**
+ * Product Model Schema
+ * Represents an individual menu item sold by a specific food stall.
+ * Implements strict multi-tenant isolation via mandatory `stallId` and
+ * hierarchical grouping via `categoryId`.
+ */
 const productSchema = new mongoose.Schema(
   {
     // Basic info
@@ -76,14 +82,11 @@ const productSchema = new mongoose.Schema(
 );
 
 // ===== INDEXES =====
-
-// Most important: Fast lookup by stall & category
-productSchema.index({ stallId: 1 });
-productSchema.index({ stallId: 1, categoryId: 1 });
-// For filtering
-productSchema.index({ stallId: 1, isAvailable: 1 });
-// For quick access
-productSchema.index({ stallId: 1, createdAt: -1 });
+// High-performance compound indexes for multi-tenant query isolation:
+productSchema.index({ stallId: 1 });                         // Primary index for stall catalog lookups
+productSchema.index({ stallId: 1, categoryId: 1 });          // Compound index for filtering items by stall category
+productSchema.index({ stallId: 1, isAvailable: 1 });         // Filter only in-stock/available items
+productSchema.index({ stallId: 1, createdAt: -1 });          // Reverse chronological sorting for recent additions
 
 const Product = mongoose.model('Product', productSchema);
 
