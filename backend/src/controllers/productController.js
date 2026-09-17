@@ -3,8 +3,12 @@ const Product = require('../models/Product');
 const Category = require('../models/Category');
 const Stall = require('../models/Stall');
 
-// ===== CREATE PRODUCT =====
-
+/**
+ * Create a new product under a specific stall
+ * @route POST /api/stalls/:stallId/products
+ * @access Private (STALL_ADMIN or SUPER_ADMIN)
+ * @desc Enforces category ownership and tenant isolation
+ */
 exports.createProduct = async (req, res) => {
   try {
     const { stallId } = req.params;
@@ -60,8 +64,12 @@ exports.createProduct = async (req, res) => {
   }
 };
 
-// ===== GET PRODUCTS FOR STALL (PUBLIC) =====
-
+/**
+ * Get list of available products for a stall with optional category filter
+ * @route GET /api/stalls/:stallId/products
+ * @access Public
+ * @desc Returns menu items populated with category details
+ */
 exports.getProductsByStall = async (req, res) => {
   try {
     const { stallId } = req.params;
