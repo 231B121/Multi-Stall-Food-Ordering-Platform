@@ -1,8 +1,15 @@
 const jwt = require('jsonwebtoken');
 
 /**
- * Middleware to authenticate requests using JWT Access Token
- * Looks for 'Bearer <token>' in the Authorization header
+ * Authenticate Token Middleware
+ * Validates incoming JSON Web Token (JWT) from Authorization header.
+ * 
+ * Expected Header Format: `Authorization: Bearer <access_token>`
+ * Attaches decoded payload `{ userId, role, mobile }` to `req.user`.
+ * 
+ * @param {import('express').Request} req - Express request object
+ * @param {import('express').Response} res - Express response object
+ * @param {import('express').NextFunction} next - Express next middleware function
  */
 const authenticateToken = (req, res, next) => {
   const authHeader = req.headers['authorization'];
@@ -29,8 +36,15 @@ const authenticateToken = (req, res, next) => {
 };
 
 /**
- * Middleware to authorize requests based on user role(s)
- * Usage: authorizeRole('SUPER_ADMIN', 'STALL_ADMIN')
+ * Role-Based Access Control (RBAC) Middleware
+ * Restricts route access to users possessing one of the allowed roles.
+ * 
+ * @example
+ * router.post('/stall', authenticateToken, authorizeRole('SUPER_ADMIN'), createStall);
+ * router.put('/stall/:id', authenticateToken, authorizeRole('SUPER_ADMIN', 'STALL_ADMIN'), updateStall);
+ * 
+ * @param {...string} allowedRoles - List of permitted roles (e.g., 'SUPER_ADMIN', 'STALL_ADMIN', 'CUSTOMER')
+ * @returns {import('express').RequestHandler} Express middleware handler
  */
 const authorizeRole = (...allowedRoles) => {
   const roles = allowedRoles.flat();
