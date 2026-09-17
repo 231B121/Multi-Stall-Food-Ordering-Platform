@@ -1,6 +1,12 @@
 const mongoose = require('mongoose');
 const slugify = require('slugify');
 
+/**
+ * Stall Model Schema
+ * Represents a food stall/outlet within the multi-tenant food ordering platform.
+ * Each stall is administered by a STALL_ADMIN user and encapsulates its own
+ * menu categories, products, inventory, and order history.
+ */
 const stallSchema = new mongoose.Schema(
   {
     // Basic info
@@ -108,10 +114,11 @@ stallSchema.pre('save', function () {
 });
 
 // ===== INDEXES =====
-
-stallSchema.index({ adminId: 1 }); // Find stalls by admin
-stallSchema.index({ isActive: 1 }); // Filter active stalls
-stallSchema.index({ createdAt: -1 }); // Pagination
+// Optimized compound and single-field indexing for query performance:
+stallSchema.index({ adminId: 1 });        // Speeds up stall lookups by admin owner
+stallSchema.index({ isActive: 1 });       // Fast filtering of active stalls in marketplace
+stallSchema.index({ createdAt: -1 });      // Enables efficient pagination for stall listings
+stallSchema.index({ slug: 1 });           // Fast URL-friendly stall profile lookups
 
 const Stall = mongoose.model('Stall', stallSchema);
 

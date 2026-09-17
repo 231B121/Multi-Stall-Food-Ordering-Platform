@@ -11,7 +11,7 @@ function App() {
       <AuthProvider>
         <CartProvider>
           <Routes>
-            {/* Stall page - public */}
+            {/* Stall page - public ha  */}
             <Route path="/stall/:slug" element={<StallPage />} />
 
             {/* Default redirect */}
