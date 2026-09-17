@@ -15,12 +15,19 @@ app.use(express.json());
 app.use(cookieParser());
 
 // Middleware: CORS
+const allowedOrigins = [
+  'http://localhost:3000',
+  'http://localhost:5173',
+  'http://localhost:5000',
+];
+
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' 
     ? 'https://yourdomain.com' 
-    : 'http://localhost:3000',
+    : allowedOrigins,
   credentials: true,
 }));
+
 
 // Middleware: Logging
 app.use((req, res, next) => {
